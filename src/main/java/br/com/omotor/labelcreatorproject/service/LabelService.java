@@ -8,6 +8,7 @@ import br.com.omotor.labelcreatorproject.repository.SystemTranslateRepository;
 import jakarta.transaction.Transactional;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,7 @@ public class LabelService {
         HashMap<String, String> labels = labelClient.fetchLabels(URI.create(project.getDevUrl()));
         quotesList.getQuotes().forEach(quote -> {
             quote = quote.trim();
-            String url = "https://api.mymemory.translated.net/get?q=" + quote + "&langpair=pt|en";
+            String url = "https://api.mymemory.translated.net/get?q=" + removePunctuation(quote) + "&langpair=pt|en";
             Matches matches = template.getForObject(url, Matches.class);
             assert matches != null;
             String translation = matches.getMatches().get(0).getTranslation();
@@ -141,29 +142,28 @@ public class LabelService {
         List<SystemTranslate> labels = repository.findAllBySystemLocaleId(1L);
         HashMap<String, String> devLabels = labelClient.fetchLabels(URI.create(projectRepository.findById(projectId).get().getDevUrl()));
 
-        Document doc = Jsoup.parse(html.getHtml());
-        Elements elements = doc.getAllElements();
+        Document document = new Document("");
+        document.append(html.getHtml());
 
-        labels.forEach(systemTranslate -> elements.forEach(element -> {
-            if (element.text().equals(systemTranslate.getValue()) && !element.tagName().equals("mat-icon")) {
-                String keyLabel = systemTranslate.getKeyLabel();
-                if (!element.text().isEmpty()) {
-                    element.replaceWith(new TextNode("{{'" + keyLabel + "' | translate}}"));
-                }
-            }
-        }));
-//
-//        for (Map.Entry<String, String> entry : devLabels.entrySet()) {
-//            if (!entry.getKey().equals("")) {
-//                elements.forEach(element -> {
-//                    if (entry.getValue().equals(element.text()) && !element.tagName().equals("mat-icon")) {
-//                        element.replaceWith(new TextNode("{{'" + entry.getKey() + "' | translate}}"));
-//                    }
-//                });
-//            }
-//        }
+        for (SystemTranslate label : labels) {
+            replaceTextWithTranslation(document, label.getValue(), label.getKeyLabel());
+        }
 
-        return ResponseEntity.status(200).body(new Html(elements.html()));
+        for (Map.Entry<String, String> label : devLabels.entrySet()) {
+            replaceTextWithTranslation(document, label.getValue(), label.getKey());
+        }
+
+        return ResponseEntity.status(200).body(new Html(document.outerHtml()));
+    }
+
+    // Método para substituir texto por tradução mantendo os atributos
+    private void replaceTextWithTranslation(Element element, String oldValue, String translationKey) {
+        if (element.isBlock() && element.ownText().equals(oldValue) && !element.tagName().equals("mat-icon")) {
+            element.text("{{'" + translationKey + "' | translate}}");
+        }
+        for (Element child : element.children()) {
+            replaceTextWithTranslation(child, oldValue, translationKey);
+        }
     }
 
     public ResponseEntity<Html> htmlTranslator(Html html, Long projectId) {
@@ -192,5 +192,11 @@ public class LabelService {
         sqlCommand.deleteCharAt(sqlCommand.lastIndexOf("\n"));
         sqlCommand.append(";");
         return ResponseEntity.status(200).body(new ReturnMessage("SQL Gerado com Sucesso!", sqlCommand));
+    }
+
+    public String removePunctuation(String input) {
+        String regex = "[\\p{Punct}]";
+        String result = input.replaceAll(regex, "");
+        return result;
     }
 }

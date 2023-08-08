@@ -3,7 +3,7 @@ package br.com.omotor.labelcreatorproject.resource;
 import br.com.omotor.labelcreatorproject.model.dto.*;
 import br.com.omotor.labelcreatorproject.service.LabelService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,10 +12,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/label")
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class LabelResource {
 
-    @Autowired
-    private LabelService service;
+    private final LabelService service;
 
     @PostMapping
     public ResponseEntity<ReturnMessage> createLabel(@RequestBody @Valid Quotes quotesList) {
@@ -47,7 +47,7 @@ public class LabelResource {
         return service.searchLabel(value);
     }
 
-    @PostMapping("/replace")
+    @PostMapping("/replace/{projectId}")
     public ResponseEntity<?> replaceLabel(@RequestBody Html html, @PathVariable Long projectId){
         return service.replaceLabel(html, projectId);
     }

@@ -5,18 +5,18 @@ import br.com.omotor.labelcreatorproject.model.dto.ProjectDto;
 import br.com.omotor.labelcreatorproject.model.dto.ReturnMessage;
 import br.com.omotor.labelcreatorproject.repository.ProjectRepository;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ProjectService {
 
-    @Autowired
-    private ProjectRepository repository;
+    private final ProjectRepository repository;
 
 
     public ResponseEntity<ReturnMessage> saveProject(@Valid ProjectDto projectDto) {
