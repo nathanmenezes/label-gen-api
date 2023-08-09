@@ -1,27 +1,16 @@
 package br.com.omotor.labelcreatorproject.service;
 
-import br.com.omotor.labelcreatorproject.util.HtmlUtils;
-import org.jsoup.nodes.Document;
 
-import java.util.Arrays;
+import com.theokanning.openai.completion.CompletionRequest;
+import com.theokanning.openai.service.OpenAiService;
+
+import java.util.List;
 
 public class TesteApp {
 
+    private final static String API_KEY = "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";
 
     public static void main(String[] args) {
-        String input = "<p [formControl]=\"ex\">\nGestor\n</p>"+
-                "\n<p [formControl]=\"ex\">\nGestor\n</p>";
-
-        Document document = new Document("");
-        document.append(input);
-
-        String[] linhasInput = input.split("\n");
-
-
-        String output = document.toString();
-
-        System.out.println(Arrays.toString(linhasInput));
-        System.out.println(HtmlUtils.htmlFormat(output));
 
     }
 }

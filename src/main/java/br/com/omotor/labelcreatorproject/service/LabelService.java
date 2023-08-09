@@ -5,6 +5,7 @@ import br.com.omotor.labelcreatorproject.model.*;
 import br.com.omotor.labelcreatorproject.model.dto.*;
 import br.com.omotor.labelcreatorproject.repository.ProjectRepository;
 import br.com.omotor.labelcreatorproject.repository.SystemTranslateRepository;
+import br.com.omotor.labelcreatorproject.util.GptUtils;
 import br.com.omotor.labelcreatorproject.util.HtmlUtils;
 import jakarta.transaction.Transactional;
 import org.jsoup.Jsoup;
@@ -38,30 +39,38 @@ public class LabelService {
 
     @Transactional
     public ResponseEntity<ReturnMessage> createLabel(Quotes quotesList) {
-        RestTemplate template = new RestTemplate();
         List<SystemTranslate> approvedLabels = new ArrayList<>();
         List<SystemTranslate> reprovedLabels = new ArrayList<>();
         Project project = projectRepository.findById(quotesList.getIdProject()).get();
-        HashMap<String, String> labels = labelClient.fetchLabels(URI.create(project.getDevUrl()));
-        quotesList.getQuotes().forEach(quote -> {
+        //HashMap<String, String> labels = labelClient.fetchLabels(URI.create(project.getDevUrl()));
+        List<SystemTranslate> ptLabels = new ArrayList<>();
+        List<SystemTranslate> enLabels = new ArrayList<>();
+        List<String> wordsTranslated = GptUtils.translateWords(quotesList.getQuotes());
+        int i = 0;
+
+        for (String quote : quotesList.getQuotes()) {
             quote = quote.trim();
-            String url = "https://api.mymemory.translated.net/get?q=" + quote + "&langpair=pt|en";
-            Matches matches = template.getForObject(url, Matches.class);
-            assert matches != null;
-            String translation = matches.getMatches().get(0).getTranslation();
-            String labelNick = "label_" + translation.replace(" ", "_").toLowerCase();
-            SystemTranslate systemTranslatePt = new SystemTranslate(labelNick, quote, 1, project);
-            SystemTranslate systemTranslateEn = new SystemTranslate(labelNick, translation, 2, project);
+            String finalQuote = quote;
+            String labelNick = "label_" + wordsTranslated.get(i).replace(" ", "_").toLowerCase();
+            SystemTranslate PtSystemTranslate = new SystemTranslate(labelNick, finalQuote, 1, project);
+            SystemTranslate EnSystemTranslate = new SystemTranslate(labelNick, wordsTranslated.get(i), 2, project);
+            ptLabels.add(PtSystemTranslate);
+            enLabels.add(EnSystemTranslate);
+            i++;
+        }
+        for (SystemTranslate systemTranslatePt : ptLabels) {
             if (repository.existsByValueAndKeyLabelAndProjectId(systemTranslatePt.getValue(), systemTranslatePt.getKeyLabel(), systemTranslatePt.getProject().getId())) {
                 reprovedLabels.add(systemTranslatePt);
-            } else if (labels.containsKey(systemTranslatePt.getKeyLabel()) && labels.containsValue(systemTranslatePt.getValue())) {
-                reprovedLabels.add(systemTranslatePt);
-            } else {
+            }
+            //else if (labels.containsKey(systemTranslatePt.getKeyLabel()) && labels.containsValue(systemTranslatePt.getValue())) {
+            //reprovedLabels.add(systemTranslatePt);
+            //}
+            else {
                 repository.save(systemTranslatePt);
-                repository.save(systemTranslateEn);
+                repository.save(enLabels.get(ptLabels.indexOf(systemTranslatePt)));
                 approvedLabels.add(systemTranslatePt);
             }
-        });
+        }
         return ResponseEntity.status(200).body(new ReturnMessage("Labels cadastrada com sucesso!", new LabelResults(approvedLabels, reprovedLabels)));
     }
 
@@ -174,6 +183,7 @@ public class LabelService {
         }
     }
 
+    @Transactional
     public ResponseEntity<Html> htmlTranslator(Html html, Long projectId) {
         this.createLabel(new Quotes(extractTextWithJsoup(html.getHtml()).stream().toList(), projectId));
         return this.htmlReplacer(html, projectId);
