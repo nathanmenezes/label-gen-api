@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class StringUtil {
+public class HtmlUtils {
 
     public static void main(String[] args) {
         String input = "<p [formControl]=\"ex\">\nGestor\n</p>";
@@ -41,24 +41,31 @@ public class StringUtil {
     public static String reformatHtml(String newHtml, String oldHtml, Set<String> strings) {
 
 
-        String[] newHtmlLines = newHtml.split("\n");
-        String[] oldHtmlLines = oldHtml.split("\n");
+        String[] newHtmlLines = htmlFormat(newHtml).split("\n");
+        String[] oldHtmlLines = htmlFormat(oldHtml).split("\n");
 
         String resultHtml = "";
 
 
 
         for (int i = 0; i < newHtmlLines.length; i++) {
-            if (oldHtml.contains(newHtmlLines[i])) {
+            if (newHtml.contains(oldHtmlLines[i].toLowerCase())) {
                 resultHtml = newHtml.replaceAll(newHtmlLines[i], oldHtmlLines[i]);
             }
         }
 
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String newHtmlLine : newHtmlLines) {
-            stringBuilder.append(newHtmlLine).append("\n");
-        }
+//        StringBuilder stringBuilder = new StringBuilder();
+//        for (String newHtmlLine : newHtmlLines) {
+//            stringBuilder.append(newHtmlLine).append("\n");
+//        }
 
         return resultHtml;
+    }
+
+    public static String removeHtmlTags(String input) {
+        String htmlTagRemoved = input.replaceAll("<html[^>]*>", "");
+        String headTagRemoved = htmlTagRemoved.replaceAll("<head[^>]*>.*?</head>", "");
+        String bodyTagRemoved = headTagRemoved.replaceAll("<body[^>]*>", "");
+        return bodyTagRemoved.replaceAll("</html>|</body>", "").replaceAll("\n", "");
     }
 }

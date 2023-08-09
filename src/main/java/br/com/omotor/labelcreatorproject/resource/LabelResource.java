@@ -37,9 +37,9 @@ public class LabelResource {
         return service.findOneLabel(id);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ReturnMessage> editLabel(@PathVariable Long id, @RequestBody LabelDto labelDto) {
-        return service.editLabel(id, labelDto);
+    @PutMapping
+    public ResponseEntity<ReturnMessage> editLabel(@RequestBody SystemTranslateDto labelDto) {
+        return service.editLabel(labelDto);
     }
 
     @GetMapping("/search")

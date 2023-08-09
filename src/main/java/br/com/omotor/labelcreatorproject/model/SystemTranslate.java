@@ -1,6 +1,7 @@
 package br.com.omotor.labelcreatorproject.model;
 
 import br.com.omotor.labelcreatorproject.model.dto.LabelDto;
+import br.com.omotor.labelcreatorproject.model.dto.SystemTranslateDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -38,7 +39,7 @@ public class SystemTranslate {
         this.project = project;
     }
 
-    public void edit(LabelDto labelDto){
+    public void edit(SystemTranslateDto labelDto){
         if(labelDto.getKeyLabel() != null){
             this.keyLabel = labelDto.getKeyLabel();
         }
