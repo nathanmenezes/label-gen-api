@@ -5,6 +5,7 @@ import br.com.omotor.labelcreatorproject.model.*;
 import br.com.omotor.labelcreatorproject.model.dto.*;
 import br.com.omotor.labelcreatorproject.repository.ProjectRepository;
 import br.com.omotor.labelcreatorproject.repository.SystemTranslateRepository;
+import br.com.omotor.labelcreatorproject.util.StringUtil;
 import jakarta.transaction.Transactional;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -41,7 +42,7 @@ public class LabelService {
         List<SystemTranslate> approvedLabels = new ArrayList<>();
         List<SystemTranslate> reprovedLabels = new ArrayList<>();
         Project project = projectRepository.findById(quotesList.getIdProject()).get();
-        HashMap<String, String> labels = labelClient.fetchLabels(URI.create(project.getDevUrl()));
+        //HashMap<String, String> labels = labelClient.fetchLabels(URI.create(project.getDevUrl()));
         quotesList.getQuotes().forEach(quote -> {
             quote = quote.trim();
             String url = "https://api.mymemory.translated.net/get?q=" + removePunctuation(quote) + "&langpair=pt|en";
@@ -52,8 +53,6 @@ public class LabelService {
             SystemTranslate systemTranslatePt = new SystemTranslate(labelNick, quote, 1, project);
             SystemTranslate systemTranslateEn = new SystemTranslate(labelNick, translation, 2, project);
             if (repository.existsByValueAndKeyLabelAndProjectId(systemTranslatePt.getValue(), systemTranslatePt.getKeyLabel(), systemTranslatePt.getProject().getId())) {
-                reprovedLabels.add(systemTranslatePt);
-            } else if (labels.containsKey(systemTranslatePt.getKeyLabel()) && labels.containsValue(systemTranslatePt.getValue())) {
                 reprovedLabels.add(systemTranslatePt);
             } else {
                 repository.save(systemTranslatePt);
@@ -140,7 +139,7 @@ public class LabelService {
 
     public ResponseEntity<Html> htmlReplacer(Html html, Long projectId) {
         List<SystemTranslate> labels = repository.findAllBySystemLocaleId(1L);
-        HashMap<String, String> devLabels = labelClient.fetchLabels(URI.create(projectRepository.findById(projectId).get().getDevUrl()));
+        //HashMap<String, String> devLabels = labelClient.fetchLabels(URI.create(projectRepository.findById(projectId).get().getDevUrl()));
 
         Document document = new Document("");
         document.append(html.getHtml());
@@ -149,11 +148,13 @@ public class LabelService {
             replaceTextWithTranslation(document, label.getValue(), label.getKeyLabel());
         }
 
-        for (Map.Entry<String, String> label : devLabels.entrySet()) {
-            replaceTextWithTranslation(document, label.getValue(), label.getKey());
-        }
+        //for (Map.Entry<String, String> label : devLabels.entrySet()) {
+        //    replaceTextWithTranslation(document, label.getValue(), label.getKey());
+        //}
 
-        return ResponseEntity.status(200).body(new Html(document.outerHtml()));
+
+
+        return ResponseEntity.status(200).body(new Html(StringUtil.reformatHtml(document.outerHtml(), html.getHtml(), extractTextWithJsoup(html.getHtml()))));
     }
 
     // Método para substituir texto por tradução mantendo os atributos
